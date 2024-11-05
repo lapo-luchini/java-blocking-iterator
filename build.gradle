@@ -1,0 +1,48 @@
+plugins {
+    id 'java'
+    id 'com.palantir.git-version' version '3.0.0'
+}
+
+group = 'it.lapo'
+version gitVersion()
+sourceCompatibility = '8'
+
+tasks.withType(JavaCompile) {
+    if (JavaVersion.current() < JavaVersion.VERSION_8)
+        new GradleException('Java 8 (or later) is needed to build this project, you are using: ' + JavaVersion.current())
+    options.release = 8
+    options.encoding = 'UTF-8'
+}
+
+//sourceSets {
+//    main {
+//        resources {
+//            srcDirs = [ 'src/main/resources', "$buildDir/version" ]
+//        }
+//    }
+//}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://artifact.andxor.it/artifactory/lib-external/' }
+}
+
+configurations.all {
+    resolutionStrategy {
+        dependencySubstitution {
+            substitute module('commons-logging:commons-logging') using module('org.slf4j:jcl-over-slf4j:' + verSLF4J)
+        }
+        eachDependency { // check that all SLF4J modules use the same version
+            if (it.requested.group == 'org.slf4j')
+                it.useVersion verSLF4J
+        }
+    }
+}
+
+dependencies {
+    testImplementation 'com.andxor:andxor-util.json:38413'
+}
+
+test {
+    useJUnitPlatform()
+}
